@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>路境行旅｜訊息產生器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&family=Noto+Sans+TC:wght@300;400;500&family=DM+Serif+Display&display=swap');
+
+  :root {
+    --teal:       #00656E;
+    --teal-dark:  #004d54;
+    --teal-light: #e0f2f3;
+    --teal-pale:  #f0fafa;
+    --yellow:     #ffc72c;
+    --yellow-dark:#e0a800;
+    --yellow-pale:#fff8e1;
+    --ink:        #1a2a2b;
+    --ink-soft:   #3a5254;
+    --ink-faint:  #7a9ea0;
+    --cream:      #f5fafa;
+    --cream-dark: #e8f4f5;
+    --border:     #b8d8da;
+    --red:        #c0392b;
+    --shadow:     0 4px 20px rgba(0,101,110,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--teal);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 4px solid var(--yellow);
+  }
+  header .logo-zh {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+  header .logo-en {
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    color: rgba(255,255,255,0.65);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  header .divider { width: 1px; height: 36px; background: rgba(255,255,255,0.25); }
+  header .subtitle {
+    font-size: 12px;
+    color: var(--yellow);
+    letter-spacing: 2px;
+    font-weight: 500;
+  }
+
+  /* ── Tab Bar ── */
+  .tab-bar {
+    display: flex;
+    background: var(--teal-dark);
+    padding: 0 32px;
+    gap: 2px;
+    border-bottom: 1px solid rgba(0,0,0,0.15);
+  }
+  .tab-btn {
+    padding: 12px 22px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+  .tab-btn:hover { color: var(--yellow); }
+  .tab-btn.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+
+  /* ── Main ── */
+  .main { display: none; padding: 32px; max-width: 900px; margin: 0 auto; }
+  .main.active { display: block; }
+
+  .section-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--teal);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  /* ── Form ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+
+  input[type="text"], input[type="date"], input[type="number"], select {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    transition: border 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+  input:focus, select:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(0,101,110,0.13);
+  }
+
+  /* Room builder */
+  .room-builder {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .room-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--cream-dark);
+    transition: background 0.15s;
+  }
+  .room-row:last-child { border-bottom: none; }
+  .room-row:hover { background: var(--teal-pale); }
+  .room-row label { font-size: 13px; color: var(--ink-soft); flex: 1; margin: 0; letter-spacing: 0; }
+  .room-row input[type="number"] { width: 64px; text-align: center; padding: 6px 8px; }
+  .room-row .room-unit { font-size: 12px; color: var(--ink-faint); white-space: nowrap; }
+
+  .name-row { display: flex; gap: 8px; align-items: flex-end; }
+  .name-row input { flex: 1; }
+  .gender-select { width: 110px !important; flex-shrink: 0; }
+
+  .deadline-row { display: flex; gap: 8px; align-items: flex-end; }
+  .deadline-row input[type="date"] { flex: 1; }
+  .deadline-row input[type="text"] { width: 100px; }
+
+  .calc-note { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+  .calc-note span { color: var(--teal); font-weight: 600; }
+
+  /* Cancel policy box */
+  .cancel-box {
+    background: var(--yellow-pale);
+    border: 1px solid #f0d070;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .cancel-box strong { color: var(--red); }
+  .cancel-box .manual-row {
+    display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .cancel-box .manual-row input[type="date"],
+  .cancel-box .manual-row input[type="text"] {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 5px; padding: 6px 10px; font-size: 13px;
+  }
+  .cancel-box .manual-row input[type="date"] { flex: 1; min-width: 130px; }
+  .cancel-box .manual-row input[type="text"] { width: 80px; }
+  .cancel-box .manual-row label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--ink-faint); cursor: pointer; letter-spacing: 0;
+  }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary {
+    background: var(--teal);
+    color: #fff;
+    border: 2px solid var(--teal);
+  }
+  .btn-primary:hover { background: var(--teal-dark); border-color: var(--teal-dark); box-shadow: var(--shadow); }
+  .btn-reset {
+    background: none;
+    color: var(--ink-faint);
+    border: 1px solid var(--border);
+  }
+  .btn-reset:hover { color: var(--teal); border-color: var(--teal); }
+
+  /* Output */
+  .output-wrap { margin-top: 28px; display: none; }
+  .output-wrap.visible { display: block; }
+  .output-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--teal);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .output-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    min-height: 100px;
+  }
+  .copy-btn {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--yellow);
+    color: var(--ink);
+    border: none;
+    border-radius: 6px;
+    padding: 11px 28px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255,199,44,0.35);
+  }
+  .copy-btn:hover { background: var(--yellow-dark); }
+  .copy-btn.copied { background: var(--teal); color: #fff; box-shadow: none; }
+
+  /* Static sections */
+  .static-section {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .static-section h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--teal);
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .static-msg {
+    white-space: pre-wrap;
+    font-size: 13.5px;
+    line-height: 1.85;
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+
+  /* Deposit form */
+  .deposit-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 640px) {
+    .main { padding: 20px 16px; }
+    .form-grid, .deposit-form-grid { grid-template-columns: 1fr; }
+    .tab-btn { padding: 10px 12px; font-size: 12px; }
+    header { padding: 14px 16px; gap: 12px; }
+    .tab-bar { padding: 0 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo-zh">路境行旅</div>
+    <div class="logo-en">Finders Hotel Hualien Wen Hua</div>
+  </div>
+  <div class="divider"></div>
+  <div class="subtitle">訊息產生器</div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('booking',this)">📋 訂房確認</button>
+  <button class="tab-btn" onclick="switchTab('deposit',this)">💳 收到訂金</button>
+  <button class="tab-btn" onclick="switchTab('checkin',this)">🏨 入住須知</button>
+</div>
+
+<!-- ══ TAB 1: BOOKING ══ -->
+<div class="main active" id="tab-booking">
+  <div class="section-title">訂房確認訊息</div>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <label>入住日期</label>
+      <input type="date" id="checkin" onchange="updateCalc()">
+    </div>
+    <div class="form-group">
+      <label>退房日期</label>
+      <input type="date" id="checkout" onchange="updateCalc()">
+    </div>
+
+    <div class="form-group full">
+      <label>房型需求（填入間數，0 代表不選）</label>
+      <div class="room-builder" id="roomBuilder"></div>
+    </div>
+
+    <div class="form-group full">
+      <label>訂房姓名</label>
+      <div class="name-row">
+        <input type="text" id="guestName" placeholder="例：王小明">
+        <select id="guestGender" class="gender-select">
+          <option value="先生">先生</option>
+          <option value="小姐">小姐</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>聯絡電話</label>
+      <input type="text" id="phone" placeholder="09xx-xxx-xxx">
+    </div>
+
+    <div class="form-group">
+      <label>大人人數</label>
+      <input type="number" id="adults" min="0" value="2">
+    </div>
+
+    <div class="form-group">
+      <label>小孩人數</label>
+      <input type="number" id="children" min="0" value="0">
+    </div>
+
+    <div class="form-group">
+      <label>合計費用（元）</label>
+      <input type="text" inputmode="numeric" id="totalFee" placeholder="例：5000" oninput="updateCalc()">
+      <div class="calc-note">訂金 (30%)：<span id="depositDisplay">—</span> 元</div>
+    </div>
+
+    <div class="form-group full">
+      <label>匯款截止日期 &amp; 時間</label>
+      <div class="deadline-row">
+        <input type="date" id="deadlineDate">
+        <input type="text" id="deadlineTime" placeholder="時間" value="12:00" style="width:90px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="cancel-box">
+    ⚠️ <strong style="color:var(--teal);font-weight:600;">取消政策截止時間</strong><br>
+    入住日往前推算：不含入住當日，再往前3天 → 即入住日前第4個日曆日。<br>
+    例：6/24 入住 → 6/20 23:59 前免費取消（20、21、22、23，不含24）<br>
+    自動計算結果：<strong id="cancelDeadlineDisplay" style="color:var(--red);">—</strong><br>
+    <div class="manual-row">
+      <input type="date" id="cancelManualDate">
+      <input type="text" id="cancelManualTime" placeholder="23:59" value="23:59">
+      <label>
+        <input type="checkbox" id="useManualCancel" onchange="updateCalc()"> 改用手動填入
+      </label>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateBooking()">產生訊息</button>
+    <button class="btn btn-reset" onclick="resetBooking()">清除重填</button>
+  </div>
+
+  <div class="output-wrap" id="bookingOutput">
+    <div class="output-label">✦ 預覽 &amp; 複製</div>
+    <div class="output-box" id="bookingText"></div>
+    <button class="copy-btn" onclick="copyMsg('bookingText', this)">一鍵複製訊息</button>
+  </div>
+</div>
+
+<!-- ══ TAB 2: DEPOSIT ══ -->
+<div class="main" id="tab-deposit">
+  <div class="section-title">確認收到訂金</div>
+
+  <div class="deposit-form-grid">
+    <div class="form-group">
+      <label>匯款日期（點選日曆）</label>
+      <input type="date" id="remitDatePicker" onchange="updateDepositBalance()">
+    </div>
+    <div class="form-group">
+      <label>訂金金額（元）</label>
+      <input type="text" inputmode="numeric" id="remitAmt" placeholder="例：1500" oninput="updateDepositBalance()">
+    </div>
+    <div class="form-group">
+      <label>匯款末五碼</label>
+      <input type="text" id="remitCode" placeholder="XXXXX" maxlength="5">
+    </div>
+    <div class="form-group">
+      <label>合計費用（自動算尾款，元）</label>
+      <input type="text" inputmode="numeric" id="depositTotalFee" placeholder="例：5000" oninput="updateDepositBalance()">
+    </div>
+    <div class="form-group">
+      <label>尾款金額（元）</label>
+      <input type="text" inputmode="numeric" id="balanceAmt" placeholder="自動計算或手動填">
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateDeposit()">產生訊息</button>
+    <button class="btn btn-reset" onclick="resetDeposit()">清除重填</button>
+  </div>
+
+  <div class="output-wrap" id="depositOutput">
+    <div class="output-label">✦ 預覽 &amp; 複製</div>
+    <div class="output-box" id="depositText"></div>
+    <button class="copy-btn" onclick="copyMsg('depositText', this)">一鍵複製訊息</button>
+  </div>
+</div>
+
+<!-- ══ TAB 3: CHECK-IN ══ -->
+<div class="main" id="tab-checkin">
+  <div class="section-title">入住須知訊息</div>
+  <div class="static-section">
+    <h3>訊息內容預覽</h3>
+    <div class="static-msg" id="checkinPreview"></div>
+  </div>
+  <div class="btn-row">
+    <button class="copy-btn" onclick="copyMsg('checkinPreview', this)" style="margin-top:0;">一鍵複製訊息</button>
+  </div>
+</div>
+
+<script>
+// ── Room types ──
+const ROOM_TYPES = [
+  '標準雙人房','標準雙床房','高級雙人房','高級雙床房',
+  '豪華雙人房','高級四人房','菁英四人房','標準單人房','高級三人房'
+];
+const rb = document.getElementById('roomBuilder');
+ROOM_TYPES.forEach((type, i) => {
+  const row = document.createElement('div');
+  row.className = 'room-row';
+  row.innerHTML = `<label>${type}</label>
+    <input type="number" id="room_${i}" min="0" value="0" style="width:64px;text-align:center;">
+    <span class="room-unit">間</span>`;
+  rb.appendChild(row);
+});
+
+// ── Helpers ──
+function toROC(dateStr) {
+  if (!dateStr) return null;
+  // Parse as local date to avoid timezone shifting
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const roc = y - 1911;
+  return `${roc}年${String(m).padStart(2,'0')}月${String(d).padStart(2,'0')}日`;
+}
+
+function addDays(dateStr, n) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + n);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+function nightsBetween(a, b) {
+  const [y1,m1,d1] = a.split('-').map(Number);
+  const [y2,m2,d2] = b.split('-').map(Number);
+  const da = new Date(y1, m1-1, d1), db = new Date(y2, m2-1, d2);
+  return Math.round((db - da) / 86400000);
+}
+
+function parseFee(id) {
+  // read as string, strip commas, parse int → avoids float rounding
+  const raw = document.getElementById(id).value.replace(/,/g, '').trim();
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? 0 : n;
+}
+
+// ── updateCalc ──
+function updateCalc() {
+  const total = parseFee('totalFee');
+  const deposit = Math.round(total * 0.3);
+  document.getElementById('depositDisplay').textContent = total ? deposit.toLocaleString() : '—';
+
+  const ci = document.getElementById('checkin').value;
+  const useManual = document.getElementById('useManualCancel').checked;
+
+  if (ci && !useManual) {
+    // 不含入住當日，再往前3天 = 入住日 -4
+    const cancelDate = addDays(ci, -4);
+    document.getElementById('cancelDeadlineDisplay').textContent = `${toROC(cancelDate)} 23:59`;
+  } else if (!useManual) {
+    document.getElementById('cancelDeadlineDisplay').textContent = '—';
+  }
+}
+
+function updateDepositBalance() {
+  const total = parseFee('depositTotalFee');
+  const remit = parseFee('remitAmt');
+  if (total > 0 && remit > 0) {
+    document.getElementById('balanceAmt').value = total - remit;
+  }
+}
+
+// ── generateBooking ──
+function generateBooking() {
+  const ci = document.getElementById('checkin').value;
+  const co = document.getElementById('checkout').value;
+  const name = document.getElementById('guestName').value.trim() || 'XXX';
+  const gender = document.getElementById('guestGender').value;
+  const phone = document.getElementById('phone').value.trim() || '—';
+  const adults = document.getElementById('adults').value || '0';
+  const children = document.getElementById('children').value || '0';
+  const totalFee = parseFee('totalFee');
+  const deposit = Math.round(totalFee * 0.3);
+  const dlDate = document.getElementById('deadlineDate').value;
+  const dlTime = document.getElementById('deadlineTime').value || '12:00';
+
+  const ciROC = ci ? toROC(ci) : 'XX月XX日';
+  const coROC = co ? toROC(co) : 'XX月XX日';
+  const nights = (ci && co) ? nightsBetween(ci, co) : 'X';
+
+  const roomLines = [];
+  ROOM_TYPES.forEach((type, i) => {
+    const qty = parseInt(document.getElementById(`room_${i}`).value, 10) || 0;
+    if (qty > 0) roomLines.push(`${type} ${qty}間`);
+  });
+  const roomStr = roomLines.length ? roomLines.join('；') : 'XXX房型 X間';
+
+  const useManual = document.getElementById('useManualCancel').checked;
+  let cancelStr = '—';
+  if (useManual) {
+    const md = document.getElementById('cancelManualDate').value;
+    const mt = document.getElementById('cancelManualTime').value || '23:59';
+    cancelStr = `${md ? toROC(md) : 'XX月XX日'} ${mt}`;
+  } else if (ci) {
+    const cancelDate = addDays(ci, -4);
+    cancelStr = `${toROC(cancelDate)} 23:59`;
+  }
+
+  const dlROC = dlDate ? toROC(dlDate) : 'XXX/XX/XX';
+
+  const msg =
+`您好，以下是您的訂房資訊，如有疑問請馬上與我們聯繫！
+
+• 入住日期：${ciROC} 至 ${coROC}（共 ${nights} 晚）
+• 房型需求：${roomStr}
+• 訂房姓名：${name} ${gender}
+• 聯絡電話：${phone}
+• 入住人數：${adults} 位大人；${children} 位小孩
+• 合計費用：${totalFee ? totalFee.toLocaleString() : 'XXXX'} 元
+• 匯款訂金：${totalFee ? deposit.toLocaleString() : 'XXXX'} 元，為總房價 30%
+• 房價不含車位和拋棄式盥洗用品、小毛巾，客房清潔服務採付費制，敬請理解。
+
+銀行代碼：013 國泰世華商業銀行 忠孝分行
+匯款帳號：0110-3558-8606
+銀行戶名：小鹿文娛股份有限公司花蓮文化分公司
+
+【匯款完畢請主動來電或訊息告知末五碼，請於 ${dlROC} 中午 ${dlTime} 前完成匯款，未依規定時間內完成匯款恕無法保留房間，本館不另通知，謝謝您的配合。】
+
+【訂房取消政策】
+• 如於入住日三日之前（不含入住當日，意即在 ${cancelStr} 前）取消或更改預訂，將不會收取費用，訂金扣除匯費 30 元後，於 21–31 個工作天將款項退還給您。
+• 請注意，如若取消或更改預訂超過免費時限，或於入住日當天未如期入住者，本館不會退還訂金，原匯款訂金費用將自動轉換為取消費用。
+
+Kind Regards,
+路境行旅花蓮文化館 Finders Hotel Hualien Wen Hua`;
+
+  document.getElementById('bookingText').textContent = msg;
+  const out = document.getElementById('bookingOutput');
+  out.classList.add('visible');
+  out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resetBooking() {
+  ['checkin','checkout','guestName','phone','totalFee','deadlineDate','cancelManualDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('deadlineTime').value = '12:00';
+  document.getElementById('cancelManualTime').value = '23:59';
+  document.getElementById('adults').value = 2;
+  document.getElementById('children').value = 0;
+  document.getElementById('guestGender').value = '先生';
+  document.getElementById('useManualCancel').checked = false;
+  ROOM_TYPES.forEach((_,i) => { document.getElementById(`room_${i}`).value = 0; });
+  document.getElementById('depositDisplay').textContent = '—';
+  document.getElementById('cancelDeadlineDisplay').textContent = '—';
+  document.getElementById('bookingOutput').classList.remove('visible');
+}
+
+// ── generateDeposit ──
+function generateDeposit() {
+  const pickerVal = document.getElementById('remitDatePicker').value;
+  const dateStr = pickerVal ? toROC(pickerVal) : 'XXX年XX月XX日';
+  const amt = parseFee('remitAmt');
+  const code = document.getElementById('remitCode').value.trim() || 'XXXXX';
+  const balance = parseInt(document.getElementById('balanceAmt').value, 10) || 0;
+
+  const msg =
+`您好，這裡是路境行旅花蓮文化館。
+
+我們已收到您於 ${dateStr} 匯款訂金 ${amt ? amt.toLocaleString() : 'XXXX'} 元，
+末五碼：${code}，尾款 ${balance ? balance.toLocaleString() : 'XXXX'} 元請於入住當天結清，發票現場開立。
+
+Kind Regards,
+路境行旅花蓮文化館 Finders Hotel Hualien Wen Hua`;
+
+  document.getElementById('depositText').textContent = msg;
+  const out = document.getElementById('depositOutput');
+  out.classList.add('visible');
+  out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resetDeposit() {
+  ['remitDatePicker','remitAmt','remitCode','balanceAmt','depositTotalFee'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('depositOutput').classList.remove('visible');
+}
+
+// ── Static check-in ──
+document.getElementById('checkinPreview').textContent =
+`【入住須知】
+• 櫃檯服務時間：24小時櫃台服務
+• 入住時間：15:00 後
+• 退房時間：11:00 前
+• 早餐供應時間：07:00–10:00
+（依訂房方案可選含早、不含早，恕不提供外帶及退款）
+• 本館「不提供」加床服務，請依照房型入住相對應人數
+• 房價不含車位及拋棄式盥洗備品和瓶裝水、小毛巾
+• 每房僅限 1 位 12 歲以下兒童免費不佔床（不另提供枕頭棉被及備品）
+• 為維護住宿品質，22:00 後請降低音量，避免影響其他住客休息
+• 禁止攜帶寵物（導盲犬除外）
+
+【收費須知】
+• 續住清潔：每次 TWD$100
+• 提前入住／延遲退房：每小時 TWD$200（超過 10 分鐘以 1 小時計）
+• 超過房型基本可容納人數，每位每晚 TWD$500（無加床服務）
+• 室內及騎樓全面禁菸／毒品，違者收取 TWD$6,000，將依法處理並通報相關單位
+
+【訂房取消政策】
+• 入住日三日之前（不含入住當日）取消或更改預訂，訂金扣除匯費 30 元後退還
+• 逾期取消或當日未入住：收取第一晚費用
+
+飯店地址：花蓮市福建街 512 號
+飯店電話：03-8320021
+
+Kind Regards,
+路境行旅花蓮文化館 Finders Hotel Hualien Wen Hua`;
+
+// ── Copy ──
+function copyMsg(id, btn) {
+  const text = document.getElementById(id).textContent;
+  const origText = btn.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ 已複製！';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = origText; btn.classList.remove('copied'); }, 2200);
+  }).catch(() => {
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById(id));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    btn.textContent = '✓ 已複製！';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = origText; btn.classList.remove('copied'); }, 2200);
+  });
+}
+
+// ── Tab switch ──
+function switchTab(name, el) {
+  document.querySelectorAll('.main').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
